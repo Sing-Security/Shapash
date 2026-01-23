@@ -1,7 +1,7 @@
 # Hermes — Deterministic Rule Engine
 
-[![Crates.io](https://img.shields.io/crates/v/hermes.svg)](https://crates.io/crates/hermes)
-[![Documentation](https://docs.rs/hermes/badge.svg)](https://docs.rs/hermes)
+[![Crates.io](https://img.shields.io/crates/v/hermes-engine.svg)](https://crates.io/crates/hermes-engine)
+[![Documentation](https://docs.rs/hermes-engine/badge.svg)](https://docs.rs/hermes-engine)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 Hermes is a deterministic, auditable forward-chaining rule engine designed for security analysis, compliance workflows, and intelligent automation.
