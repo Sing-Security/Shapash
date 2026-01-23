@@ -1,0 +1,13 @@
+[[rule]]
+id = "elf-binary"
+description = "ELF binary format detected"
+condition = "binary.format == \"ELF\""
+score = 10
+justification = "ELF is the standard Linux binary format"
+
+[[rule]]
+id = "taint-flow"
+description = "Dangerous taint flow detected"
+condition_file = "conditions/taint-check.hel"
+score = 75
+justification = "Taint flow from untrusted source to dangerous sink"
