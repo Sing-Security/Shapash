@@ -277,8 +277,8 @@ let condition = match (&def.condition, &def.condition_file) {
 (Some(inline), None) => inline.clone(),
 (None, Some(path)) => {
 let full_path = rules_dir.join(path);
-std::fs::read_to_string(&full_path).map_err(|_| {
-Error::RuleFileNotFound(format!("Failed to read condition file '{}'", path))
+std::fs::read_to_string(&full_path).map_err(|e| {
+Error::RuleFileNotFound(format!("Failed to read condition file '{}': {}", path, e))
 })?
 }
 (Some(_), Some(_)) => {
