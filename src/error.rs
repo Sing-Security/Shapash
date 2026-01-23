@@ -1,7 +1,4 @@
-use std::num::ParseIntError;
-
 use derive_more::{Display, From};
-use tract_onnx::tract_core::ndarray::ShapeError;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -11,17 +8,31 @@ pub enum Error {
 	#[from(String, &String, &str)]
 	Custom(String),
 
-	#[from]
-	Anyhow(anyhow::Error),
-	#[from]
-	Toml(toml::de::Error),
-	#[from]
-	ParseInt(ParseIntError),
-	#[from]
-	ShapeError(ShapeError),
+	// -- Rule Loading
+	RuleFileNotFound(String),
+	RuleParseError(String),
+	InvalidRuleDefinition(String),
+
+	// -- Evaluation
+	ConditionEvaluationFailed(String),
+	MissingCondition(String),
+
+	// -- ONNX
+	#[cfg(feature = "onnx")]
+	OnnxModelLoadFailed(String),
+	#[cfg(feature = "onnx")]
+	OnnxInferenceFailed(String),
+
 	// -- Externals
 	#[from]
 	Io(std::io::Error),
+	#[from]
+	TomlParse(toml::de::Error),
+	#[from]
+	Hel(hel::HelError),
+	#[cfg(feature = "onnx")]
+	#[from]
+	TractOnnx(tract_onnx::prelude::TractError),
 }
 
 // region:    --- Custom

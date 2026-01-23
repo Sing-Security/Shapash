@@ -38,6 +38,8 @@ pub use hel::{HelResolver, Value};
 use hel::evaluate_with_resolver;
 use serde::Deserialize;
 use std::{collections::HashSet, path::Path, sync::Arc};
+
+#[cfg(feature = "onnx")]
 use tract_onnx::prelude::{
 tract_ndarray::Array2, tvec, Framework, Graph, InferenceModelExt, SimplePlan, Tensor, TypedFact, TypedOp,
 };
@@ -54,15 +56,15 @@ rule: Vec<RuleDefinition>,
 
 /// Individual rule definition from TOML
 #[derive(Debug, Deserialize)]
-struct RuleDefinition {
-id: String,
-description: String,
+pub(crate) struct RuleDefinition {
+pub(crate) id: String,
+pub(crate) description: String,
 #[serde(default)]
-condition: Option<String>,
+pub(crate) condition: Option<String>,
 #[serde(default)]
-condition_file: Option<String>,
-score: u32,
-justification: String,
+pub(crate) condition_file: Option<String>,
+pub(crate) score: u32,
+pub(crate) justification: String,
 }
 
 // endregion: --- Rule File Format (TOML)
@@ -177,12 +179,14 @@ sum.min(self.max_score)
 
 // region:    --- Heuristic Engine
 
+#[cfg(feature = "onnx")]
 type OnnxModel = SimplePlan<TypedFact, Box<dyn TypedOp>, Graph<TypedFact, Box<dyn TypedOp>>>;
 
 /// Forward-chaining rule engine with pluggable scoring
 pub struct HeuristicEngine {
-rules: Vec<HeuristicRule>,
+#[cfg(feature = "onnx")]
 model: Option<OnnxModel>,
+rules: Vec<HeuristicRule>,
 }
 
 impl HeuristicEngine {
@@ -225,16 +229,32 @@ rules.extend(parsed_rules);
 
 println!("Loaded {} rules from {}", rules.len(), rules_path);
 
+#[cfg(feature = "onnx")]
 let model = if let Some(path) = model_path {
 println!("ONNX model path provided. Loading from {}", path);
-let loaded_model = tract_onnx::onnx().model_for_path(path)?.into_optimized()?.into_runnable()?;
+let loaded_model = tract_onnx::onnx()
+.model_for_path(path)
+.map_err(|e| Error::OnnxModelLoadFailed(e.to_string()))?
+.into_optimized()
+.map_err(|e| Error::OnnxModelLoadFailed(e.to_string()))?
+.into_runnable()
+.map_err(|e| Error::OnnxModelLoadFailed(e.to_string()))?;
 Some(loaded_model)
 } else {
 println!("No ONNX model path provided. Skipping model loading.");
 None
 };
 
-Ok(Self { rules, model })
+#[cfg(not(feature = "onnx"))]
+if model_path.is_some() {
+println!("ONNX model path provided but onnx feature not enabled. Skipping model loading.");
+}
+
+Ok(Self {
+rules,
+#[cfg(feature = "onnx")]
+model,
+})
 }
 
 /// Parse a TOML rule file and load rule definitions
@@ -251,24 +271,24 @@ Ok(rules)
 }
 
 /// Load a single rule definition, resolving condition from inline or external file
-fn load_rule(def: &RuleDefinition, rules_dir: &Path) -> Result<HeuristicRule> {
+pub(crate) fn load_rule(def: &RuleDefinition, rules_dir: &Path) -> Result<HeuristicRule> {
 // Validate: must have exactly one of condition or condition_file
 let condition = match (&def.condition, &def.condition_file) {
 (Some(inline), None) => inline.clone(),
 (None, Some(path)) => {
 let full_path = rules_dir.join(path);
-std::fs::read_to_string(&full_path).map_err(|e| {
-Error::custom(format!("Failed to read condition file '{}': {}", path, e))
+std::fs::read_to_string(&full_path).map_err(|_| {
+Error::RuleFileNotFound(format!("Failed to read condition file '{}'", path))
 })?
 }
 (Some(_), Some(_)) => {
-return Err(Error::custom(format!(
+return Err(Error::InvalidRuleDefinition(format!(
 "Rule '{}' cannot have both 'condition' and 'condition_file'",
 def.id
 )))
 }
 (None, None) => {
-return Err(Error::custom(format!(
+return Err(Error::MissingCondition(format!(
 "Rule '{}' must have either 'condition' or 'condition_file'",
 def.id
 )))
@@ -360,6 +380,7 @@ evaluation_traces.sort_by(|a, b| a.rule_id.cmp(&b.rule_id));
 
 let final_score = scorer.score(&triggered_rules_info);
 
+#[cfg(feature = "onnx")]
 let onnx_model_evaluation = if let Some(ref model) = self.model {
 match self.run_onnx_inference(model, &facts) {
 Ok(output) => Some(output),
@@ -372,6 +393,9 @@ Some(format!("ONNX inference error: {}", e))
 Some("No ONNX model was loaded".to_string())
 };
 
+#[cfg(not(feature = "onnx"))]
+let onnx_model_evaluation = Some("ONNX feature not enabled".to_string());
+
 let onnx_model_evaluation: Option<Arc<str>> = onnx_model_evaluation.map(|s| s.into());
 
 HeuristicReport {
@@ -383,22 +407,30 @@ evaluation_traces,
 }
 }
 
+#[cfg(feature = "onnx")]
 fn run_onnx_inference(&self, model: &OnnxModel, facts: &HashSet<Fact>) -> Result<String> {
 let feature_vector = self.extract_features_from_facts(facts);
 let features_len = feature_vector.len();
-let input = Array2::from_shape_vec((1, features_len), feature_vector)?;
+let input = Array2::from_shape_vec((1, features_len), feature_vector)
+.map_err(|e| Error::OnnxInferenceFailed(e.to_string()))?;
 let input_tensor = input.into_dyn();
 
-let result = model.run(tvec!(Tensor::from(input_tensor).into()))?;
-let output = result[0].to_array_view::<f32>()?;
-let output_slice = output.as_slice().ok_or_else(|| Error::custom("Failed to get output slice"))?;
+let result = model
+.run(tvec!(Tensor::from(input_tensor).into()))
+.map_err(|e| Error::OnnxInferenceFailed(e.to_string()))?;
+let output = result[0]
+.to_array_view::<f32>()
+.map_err(|e| Error::OnnxInferenceFailed(e.to_string()))?;
+let output_slice = output
+.as_slice()
+.ok_or_else(|| Error::OnnxInferenceFailed("Failed to get output slice".to_string()))?;
 
 let score = if output_slice.len() >= 2 {
 output_slice[1]
 } else if output_slice.len() == 1 {
 output_slice[0]
 } else {
-return Err(Error::custom("Unexpected output shape"));
+return Err(Error::OnnxInferenceFailed("Unexpected output shape".to_string()));
 };
 
 let threshold = 0.5;
@@ -410,6 +442,7 @@ score, threshold, classification, features_len
 ))
 }
 
+#[cfg(feature = "onnx")]
 fn extract_features_from_facts(&self, facts: &HashSet<Fact>) -> Vec<f32> {
 let mut features = Vec::new();
 
@@ -606,6 +639,62 @@ justification = "Should fail"
 
 let result = HeuristicEngine::from_paths(dir.path().to_str().unwrap(), None);
 assert!(result.is_err(), "Should reject rule with no condition");
+
+Ok(())
+}
+
+#[test]
+fn test_hermes_error_custom_variant() -> Result<()> {
+// -- Setup & Fixtures
+let err = Error::custom("test error message");
+
+// -- Check
+assert!(matches!(err, Error::Custom(_)));
+assert_eq!(err.to_string(), "Custom(\"test error message\")");
+
+Ok(())
+}
+
+#[test]
+fn test_hermes_load_rule_missing_condition() -> Result<()> {
+// -- Setup & Fixtures
+let def = RuleDefinition {
+id: "test-rule".to_string(),
+description: "Test".to_string(),
+condition: None,
+condition_file: None,
+score: 50,
+justification: "Test".to_string(),
+};
+
+// -- Exec
+let result = HeuristicEngine::load_rule(&def, Path::new("."));
+
+// -- Check
+assert!(result.is_err());
+assert!(matches!(result.unwrap_err(), Error::MissingCondition(_)));
+
+Ok(())
+}
+
+#[test]
+fn test_hermes_load_rule_both_conditions() -> Result<()> {
+// -- Setup & Fixtures
+let def = RuleDefinition {
+id: "test-rule".to_string(),
+description: "Test".to_string(),
+condition: Some("test".to_string()),
+condition_file: Some("test.hel".to_string()),
+score: 50,
+justification: "Test".to_string(),
+};
+
+// -- Exec
+let result = HeuristicEngine::load_rule(&def, Path::new("."));
+
+// -- Check
+assert!(result.is_err());
+assert!(matches!(result.unwrap_err(), Error::InvalidRuleDefinition(_)));
 
 Ok(())
 }
