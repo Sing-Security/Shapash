@@ -1,6 +1,6 @@
-//! Hermes — A deterministic, auditable forward-chaining rule engine
+//! Shapash — A deterministic, auditable forward-chaining rule engine
 //!
-//! Hermes orchestrates rules; HEL (external crate) evaluates expressions.
+//! Shapash orchestrates rules; HEL (external crate) evaluates expressions.
 //!
 //! ## Rule File Format
 //!
@@ -483,7 +483,7 @@ use super::*;
 use tempfile::tempdir;
 
 #[test]
-fn test_hermes_simple_evaluation() -> Result<()> {
+fn test_shapash_simple_evaluation() -> Result<()> {
 let mut facts = HashSet::new();
 facts.insert(Fact::BinaryInfo(BinaryInfo {
 format: "ELF".into(),
@@ -501,7 +501,7 @@ Ok(())
 }
 
 #[test]
-fn test_hermes_scoring_simple_sum() -> Result<()> {
+fn test_shapash_scoring_simple_sum() -> Result<()> {
 let scorer = SimpleSumClampScorer::new();
 let triggered = vec![
 TriggeredRuleInfo {
@@ -524,7 +524,7 @@ Ok(())
 }
 
 #[test]
-fn test_hermes_toml_rule_loading_inline() -> Result<()> {
+fn test_shapash_toml_rule_loading_inline() -> Result<()> {
 let dir = tempdir()?;
 let rule_path = dir.path().join("test.rule");
 
@@ -558,7 +558,7 @@ Ok(())
 }
 
 #[test]
-fn test_hermes_toml_rule_loading_external() -> Result<()> {
+fn test_shapash_toml_rule_loading_external() -> Result<()> {
 let dir = tempdir()?;
 let conditions_dir = dir.path().join("conditions");
 std::fs::create_dir(&conditions_dir)?;
@@ -600,7 +600,7 @@ Ok(())
 }
 
 #[test]
-fn test_hermes_validation_both_conditions() -> Result<()> {
+fn test_shapash_validation_both_conditions() -> Result<()> {
 let dir = tempdir()?;
 let rule_path = dir.path().join("test.rule");
 
@@ -623,7 +623,7 @@ Ok(())
 }
 
 #[test]
-fn test_hermes_validation_no_condition() -> Result<()> {
+fn test_shapash_validation_no_condition() -> Result<()> {
 let dir = tempdir()?;
 let rule_path = dir.path().join("test.rule");
 
@@ -644,7 +644,7 @@ Ok(())
 }
 
 #[test]
-fn test_hermes_error_custom_variant() -> Result<()> {
+fn test_shapash_error_custom_variant() -> Result<()> {
 // -- Setup & Fixtures
 let err = Error::custom("test error message");
 
@@ -656,7 +656,7 @@ Ok(())
 }
 
 #[test]
-fn test_hermes_load_rule_missing_condition() -> Result<()> {
+fn test_shapash_load_rule_missing_condition() -> Result<()> {
 // -- Setup & Fixtures
 let def = RuleDefinition {
 id: "test-rule".to_string(),
@@ -678,7 +678,7 @@ Ok(())
 }
 
 #[test]
-fn test_hermes_load_rule_both_conditions() -> Result<()> {
+fn test_shapash_load_rule_both_conditions() -> Result<()> {
 // -- Setup & Fixtures
 let def = RuleDefinition {
 id: "test-rule".to_string(),

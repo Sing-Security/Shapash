@@ -1,4 +1,4 @@
-//! Adapter to implement HelResolver for Hermes Fact sets
+//! Adapter to implement HelResolver for Shapash Fact sets
 
 use crate::facts::*;
 use hel::{HelResolver, Value};
@@ -6,7 +6,7 @@ use std::collections::HashSet;
 
 /// Adapter that implements HelResolver over a `HashSet<Fact>`
 ///
-/// This provides the bridge between Hermes domain facts and the HEL evaluation engine.
+/// This provides the bridge between Shapash domain facts and the HEL evaluation engine.
 pub struct FactSetResolver<'a> {
 facts: &'a HashSet<Fact>,
 }

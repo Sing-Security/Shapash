@@ -1,4 +1,4 @@
-//! Example: Simple Hermes Rule Evaluation Pipeline
+//! Example: Simple Shapash Rule Evaluation Pipeline
 //!
 //! Demonstrates the complete pipeline:
 //! 1. Load rules from a directory (.rule TOML files)
@@ -7,12 +7,12 @@
 //! 4. Execute with custom scorer
 //! 5. Print report with traces
 
-use hermes_re::{BinaryInfo, Fact, HeuristicEngine, ImportInfo, ScoringModel, TaintFlow, TriggeredRuleInfo};
+use shapash::{BinaryInfo, Fact, HeuristicEngine, ImportInfo, ScoringModel, TaintFlow, TriggeredRuleInfo};
 use std::collections::HashSet;
 use tempfile::tempdir;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-println!("=== Hermes Rule Engine Example ===\n");
+println!("=== Shapash Rule Engine Example ===\n");
 
 // -- Setup: Create temporary rules directory
 let dir = tempdir()?;
@@ -130,7 +130,7 @@ facts
 }
 
 /// Print a formatted report
-fn print_report(report: &hermes_re::HeuristicReport, scorer_name: &str) {
+fn print_report(report: &shapash::HeuristicReport, scorer_name: &str) {
 println!("--- Report ({}) ---", scorer_name);
 println!("  Final Score: {}", report.final_score);
 println!("  Confidence: {:?}", report.confidence_level);
@@ -143,9 +143,9 @@ println!("    - {} (score: {}): {}", rule.rule_id, rule.score, rule.description)
 println!("\n  Evaluation Traces:");
 for trace in &report.evaluation_traces {
 let status = match &trace.result {
-hermes_re::RuleEvaluationResult::Triggered { score } => format!("TRIGGERED (score: {})", score),
-hermes_re::RuleEvaluationResult::NotTriggered => "NOT TRIGGERED".to_string(),
-hermes_re::RuleEvaluationResult::Error { message } => format!("ERROR: {}", message),
+shapash::RuleEvaluationResult::Triggered { score } => format!("TRIGGERED (score: {})", score),
+shapash::RuleEvaluationResult::NotTriggered => "NOT TRIGGERED".to_string(),
+shapash::RuleEvaluationResult::Error { message } => format!("ERROR: {}", message),
 };
 println!("    - {}: {}", trace.rule_id, status);
 }
