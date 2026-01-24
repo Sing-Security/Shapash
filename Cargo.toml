@@ -1,10 +1,10 @@
 [package]
-name = "hermes-re"
+name = "Shapash"
 version = "0.1.15"
 edition = "2024"
 license = "Apache-2.0"
 description = "A deterministic, auditable forward-chaining rule engine with pluggable scoring"
-repository = "https://github.com/Sing-Security/hermes"
+repository = "https://github.com/Sing-Security/Shapash"
 
 [lib]
 doctest = false
