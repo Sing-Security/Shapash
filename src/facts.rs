@@ -1,4 +1,4 @@
-//! Domain-specific fact types for Hermes rule evaluation
+//! Domain-specific fact types for Shapash rule evaluation
 //!
 //! These types represent facts that can be evaluated by HEL expressions.
 

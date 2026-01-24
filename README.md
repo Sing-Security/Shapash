@@ -1,10 +1,10 @@
-# Hermes — Deterministic Rule Engine
+# Shapash — Deterministic Rule Engine
 
-[![Crates.io](https://img.shields.io/crates/v/hermes-engine.svg)](https://crates.io/crates/hermes-engine)
-[![Documentation](https://docs.rs/hermes-engine/badge.svg)](https://docs.rs/hermes-engine)
+[![Crates.io](https://img.shields.io/crates/v/shapash.svg)](https://crates.io/crates/shapash)
+[![Documentation](https://docs.rs/shapash/badge.svg)](https://docs.rs/shapash)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-Hermes is a deterministic, auditable forward-chaining rule engine designed for security analysis, compliance workflows, and intelligent automation.
+Shapash is a deterministic, auditable forward-chaining rule engine designed for security analysis, compliance workflows, and intelligent automation.
 
 ## Features
 
@@ -40,7 +40,7 @@ justification = "NX protection should be enabled"
 ### Evaluate Rules
 
 ```rust
-use hermes::{HeuristicEngine, Fact, TaintFlow};
+use shapash::{HeuristicEngine, Fact, TaintFlow};
 use std::collections::HashSet;
 
 // Load rules from .rule files
@@ -67,7 +67,7 @@ for rule in &report.triggered_rules {
 Implement your own scoring logic:
 
 ```rust
-use hermes::{ScoringModel, TriggeredRuleInfo};
+use shapash::{ScoringModel, TriggeredRuleInfo};
 
 struct CustomScorer;
 
@@ -120,7 +120,7 @@ has_sms AND obfuscated
 
 ```
 ┌─────────────────────────────────────────────┐
-│ Hermes                                      │
+│ Shapash                                     │
 │ • Rule orchestration                        │
 │ • Fact management                           │
 │ • Scoring coordination                      │
