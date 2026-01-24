@@ -4,20 +4,7 @@ version = "0.1.0"
 edition = "2024"
 license = "Apache-2.0"
 description = "A deterministic, auditable forward-chaining rule engine with pluggable scoring"
-repository = "https://github.com/Rock3tRaccoon/hermes"
-homepage = "https://github.com/Rock3tRaccoon/hermes"
-documentation = "https://docs.rs/hermes"
-readme = "README.md"
-keywords = ["rule-engine", "heuristics", "security", "analysis", "hel"]
-categories = ["algorithms", "development-tools", "science"]
-
-# Exclude product-specific files from crate package
-exclude = [
-    "tests/fixtures/proprietary/*",
-    "README_REFACTORING.md",
-    "README_OLD.md",
-    "TODO.md",
-]
+repository = "https://github.com/Sing-Security/hermes"
 
 [lib]
 doctest = false
@@ -26,16 +13,19 @@ doctest = false
 unsafe_code = "forbid"
 
 [dependencies]
-# -- Expression evaluation (external)
+# -- Expression Evaluation
 hel = "0.2.0"
-# -- Json
-serde = { version = "1.0", features = ["derive"] }
-# -- ML/ONNX
-tract-onnx = "0.21.1"
-# -- Others
-anyhow = "1.0"
+# -- Serialization
+serde = { version = "1", features = ["derive"] }
 toml = "0.8"
+# -- ML/ONNX
+tract-onnx = { version = "0.21", optional = true }
+# -- Others
 derive_more = { version = "2", features = ["from", "display"] }
 
+[features]
+default = []
+onnx = ["tract-onnx"]
+
 [dev-dependencies]
-tempfile = "3.10"
+tempfile = "3"
