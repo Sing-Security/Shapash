@@ -1,10 +1,17 @@
 [package]
 name = "shapash"
-version = "0.1.15"
+version = "0.2.0"
 edition = "2024"
+rust-version = "1.85"
 license = "Apache-2.0"
 description = "A deterministic, auditable forward-chaining rule engine with pluggable scoring"
+readme = "README.md"
 repository = "https://github.com/Sing-Security/Shapash"
+homepage = "https://github.com/Sing-Security/Shapash"
+documentation = "https://docs.rs/shapash"
+keywords = ["rule-engine", "forward-chaining", "expert-system", "inference", "scoring"]
+categories = ["algorithms", "development-tools"]
+publish = true
 
 [lib]
 doctest = false
@@ -14,7 +21,9 @@ unsafe_code = "forbid"
 
 [dependencies]
 # -- Expression Evaluation
-hel = "0.2.0"
+# HEL 0.3 adds the `arena` feature (default-on since 0.3.0); it is additive and
+# removes no API Shapash relies on.
+hel = "0.3"
 # -- Serialization
 serde = { version = "1", features = ["derive"] }
 toml = "0.8"
@@ -29,3 +38,8 @@ onnx = ["tract-onnx"]
 
 [dev-dependencies]
 tempfile = "3"
+
+[package.metadata.docs.rs]
+# The ONNX scoring path pulls in a large native-free-but-heavy dependency tree; the
+# default-feature docs are the ones that describe the crate's normal use.
+all-features = false

@@ -501,6 +501,32 @@ Ok(())
 }
 
 #[test]
+fn test_shapash_numeric_custom_fact_compares() -> Result<()> {
+let mut facts = HashSet::new();
+facts.insert(Fact::Custom { namespace: "asm".into(), key: "gadgets".into(), value: "250".into() });
+
+// A numeric-looking custom value must resolve as a Number, or the ordering operators
+// cannot be applied to it — this is the case the resolver now special-cases.
+let resolver = FactSetResolver::new(&facts);
+assert!(evaluate_with_resolver("asm.gadgets > 200", &resolver)?, "250 should be > 200");
+assert!(!evaluate_with_resolver("asm.gadgets > 300", &resolver)?, "250 should not be > 300");
+assert!(evaluate_with_resolver("asm.gadgets == 250", &resolver)?, "250 should equal 250");
+Ok(())
+}
+
+#[test]
+fn test_shapash_non_numeric_custom_fact_stays_a_string() -> Result<()> {
+let mut facts = HashSet::new();
+facts.insert(Fact::Custom { namespace: "asm".into(), key: "packer".into(), value: "present".into() });
+
+// The numeric special-case must not capture non-numeric values: an existing equality rule
+// comparing against the string form has to keep working.
+let resolver = FactSetResolver::new(&facts);
+assert!(evaluate_with_resolver(r#"asm.packer == "present""#, &resolver)?, "string equality must still hold");
+Ok(())
+}
+
+#[test]
 fn test_shapash_scoring_simple_sum() -> Result<()> {
 let scorer = SimpleSumClampScorer::new();
 let triggered = vec![

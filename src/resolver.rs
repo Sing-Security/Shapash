@@ -76,6 +76,12 @@ _ => {}
 
 Fact::Custom { namespace, key, value } if object == namespace.as_ref() => {
 if field == key.as_ref() {
+// A numeric-looking custom value resolves as a Number so a rule can use comparison
+// operators (e.g. `asm.gadgets > 200`). Everything else stays a String, so existing
+// `== "present"` equality rules are unaffected ("present" does not parse as a number).
+if let Ok(n) = value.parse::<f64>() {
+return Some(Value::Number(n));
+}
 return Some(Value::String(value.clone()));
 }
 }
