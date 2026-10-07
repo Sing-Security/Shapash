@@ -13,11 +13,9 @@ keywords = ["rule-engine", "forward-chaining", "expert-system", "inference", "sc
 categories = ["algorithms", "development-tools"]
 publish = true
 
-[lib]
-doctest = false
-
 [lints.rust]
 unsafe_code = "forbid"
+missing_docs = "warn"
 
 [dependencies]
 # -- Expression Evaluation

@@ -14,6 +14,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   string, which made any comparison other than `==` fail against it.
 - **Dependency:** `hel` requirement raised from `0.2` to `0.3`. HEL 0.3 adds the default-on
   `arena` feature; it is additive and removes nothing Shapash uses.
+- **`Error`'s `Display` now renders the message, not the variant.** `err.to_string()` returned
+  the `Debug` form (`Custom("...")`, `InvalidRuleDefinition("...")`); it now returns the message
+  the variant carries (`"..."`). Error strings that matched the old shape will need updating.
+- **`HeuristicReport::onnx_model_evaluation` is `None` when no model ran.** It previously held a
+  placeholder string (`"ONNX feature not enabled"`, `"No ONNX model was loaded"`) that a caller
+  had to string-match. Without the `onnx` feature, or with no model supplied, the field is now
+  `None`. A model that *loaded* but failed at inference is still reported here, as
+  `"ONNX inference error: ..."`.
+- **The library no longer prints.** `from_paths` printed a line per rule file it loaded and
+  `execute_with_scorer` printed on a rule-evaluation failure and on an ONNX failure. A library
+  writing to stdout/stderr uninvited is a surprise in a program that owns its own output; the
+  evaluation failure is already carried per rule in `HeuristicReport::evaluation_traces`.
 
 ### Compatibility
 - This is a **behaviour change**, not a pure addition: a rule that compared a numeric-looking
@@ -22,11 +34,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are unaffected, since a non-numeric value still resolves as a string. Hence the minor bump.
 
 ### Fixed
+- **A bad rule condition is a load error, not a panic.** `from_paths` parsed each condition with
+  a panicking entry point, so a syntactically invalid condition — or a `condition_file` holding
+  `let` bindings, or trailing junk — aborted the process instead of returning the
+  `Error::RuleParseError` its `# Errors` section documented. Conditions are now parsed with the
+  fallible path, and the variant is reachable as documented.
 - **LICENSE replaced with the canonical Apache-2.0 text.** The copy shipped through 0.1.15 had
   §9 mis-titled ("Additional Support" for "Additional Liability") and the APPENDIX section removed,
   while `Cargo.toml` declared `license = "Apache-2.0"`. A slightly altered licence is not that
   licence; 0.2.0 ships the verbatim text with the copyright notice filled in. (0.1.15 cannot be
   corrected after the fact — a published version can be yanked, never edited.)
+
+### Known limitations
+- A fact set holding two facts that provide the *same* attribute has no defined answer: the set
+  is a `HashSet`, so which one a condition sees depends on iteration order. Give one fact per
+  attribute. (Documented, not changed — choosing the semantics is a design decision.)
+- A `condition_file` must hold a single HEL expression. The `let` bindings a HEL *script* may
+  carry are not expressions and are rejected at load time.
 
 ## [0.1.15] - 2026-01-24
 
