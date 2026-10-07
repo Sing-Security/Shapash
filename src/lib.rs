@@ -1,14 +1,13 @@
 //! Shapash — a deterministic, auditable forward-chaining rule engine.
 //!
-//! Shapash owns the rules; [HEL](hel) evaluates their conditions. A rule is a TOML record
-//! with an id, a score, and a condition written in HEL, and the engine's job is to fire the
-//! ones whose condition holds, in a fixed order, and to leave an audit trail of what it did.
+//! Shapash owns the rules; [HEL](hel) evaluates their conditions. A rule is a TOML record with
+//! an id, a score and a HEL condition; the engine fires the ones whose condition holds and
+//! reports what it did.
 //!
 //! ```
 //! use shapash::{Fact, HeuristicEngine, TaintFlow};
 //! use std::collections::HashSet;
 //!
-//! // A rule file, as it would sit on disk.
 //! let dir = tempfile::tempdir()?;
 //! std::fs::write(dir.path().join("taint.rule"), r#"
 //! [[rule]]
@@ -68,12 +67,11 @@
 //!
 //! # Determinism
 //!
-//! Rules are evaluated in the order they were loaded, the triggered set and the traces are
-//! sorted by rule id before the report is returned, and the fact set is only ever queried, so
-//! the same rules and facts produce the same report. The one caveat is a fact set that gives
-//! two facts for the *same* attribute: which of them a condition sees is then up to
-//! `HashSet` iteration order. Supply one fact per attribute — see
-//! [`FactSetResolver`](FactSetResolver#method.resolve_attr).
+//! Rules are evaluated in load order, the triggered set and the traces are sorted by rule id
+//! before the report is returned, and the fact set is only ever queried, so the same rules and
+//! facts give the same report. The one caveat is two facts providing the *same* attribute:
+//! which one a condition sees is then up to `HashSet` iteration order. Supply one fact per
+//! attribute — see [`FactSetResolver`](FactSetResolver#method.resolve_attr).
 //!
 //! # Cargo features
 //!
@@ -167,8 +165,7 @@ pub struct HeuristicReport {
     /// What the ONNX model made of the facts, when one ran.
     ///
     /// `None` when no model was evaluated — the `onnx` feature is off, or no model was
-    /// supplied. A model that failed to run is reported here as a message rather than
-    /// silently: this field is the only channel for it.
+    /// supplied. A model that loaded but failed is reported here as a message.
     pub onnx_model_evaluation: Option<Arc<str>>,
     /// Which band [`final_score`](Self::final_score) falls in.
     pub confidence_level: ConfidenceLevel,
@@ -246,10 +243,7 @@ fn confidence(score: u32) -> ConfidenceLevel {
 
 // region:    --- ScoringModel Trait
 
-/// How triggered rules become one number.
-///
-/// The engine takes this as `&dyn ScoringModel`, so a caller picks the policy — sum, maximum,
-/// weighted average — without the engine knowing which.
+/// How triggered rules become one number: sum, maximum, weighted average, anything.
 pub trait ScoringModel {
     /// Reduce the rules that fired to a final score.
     fn score(&self, triggered: &[TriggeredRuleInfo]) -> u32;
@@ -311,12 +305,12 @@ impl HeuristicEngine {
     /// Load every `.rule` file in `rules_path`, resolving each condition from inline text or
     /// from a file next to the rules.
     ///
-    /// Files are read in the order the directory listing yields them, and rules keep the order
-    /// they were read in — the report is sorted afterwards, so the order does not reach the
-    /// caller, but two rules with the same id will fight over which fires first.
+    /// Files are read in the order the directory listing yields them, and rules keep that order
+    /// — the report is sorted afterwards, but two rules with the same id fight over which fires
+    /// first. Files whose extension is not `.rule` are skipped.
     ///
-    /// `model_path` is only used when the `onnx` feature is enabled; without it the argument
-    /// is accepted and ignored. Files whose extension is not `.rule` are skipped.
+    /// `model_path` is only used when the `onnx` feature is enabled; without it the argument is
+    /// accepted and ignored.
     ///
     /// # Errors
     ///
@@ -330,8 +324,8 @@ impl HeuristicEngine {
     ///   feature; the variant does not exist without it, so this is not a link).
     ///
     /// The first failure aborts loading, so a partially-loaded engine is never returned. On
-    /// success every rule's condition has already been parsed, and a rule that will not parse
-    /// is a loading error rather than a surprise at evaluation time.
+    /// success every rule's condition has already been parsed, so a rule that will not parse is
+    /// caught here rather than at evaluation time.
     pub fn from_paths(rules_path: &str, model_path: Option<&str>) -> Result<Self> {
         let rules_dir = Path::new(rules_path);
         let mut rules = Vec::new();
@@ -360,8 +354,7 @@ impl HeuristicEngine {
             None
         };
 
-        // Without the feature there is no model to load; the argument is documented as ignored
-        // rather than made to fail, so a caller can pass the same path either way.
+        // Without the feature there is no model to load; the path is taken and ignored.
         #[cfg(not(feature = "onnx"))]
         let _ = model_path;
 
@@ -392,7 +385,6 @@ impl HeuristicEngine {
     /// As [`from_paths`](Self::from_paths): a definition with both or neither condition field,
     /// an unreadable condition file, or a condition that is not a valid HEL expression.
     pub(crate) fn load_rule(def: &RuleDefinition, rules_dir: &Path) -> Result<HeuristicRule> {
-        // A rule has exactly one condition: inline, or in a file beside the rules.
         let condition = match (&def.condition, &def.condition_file) {
             (Some(inline), None) => inline.clone(),
             (None, Some(path)) => {
@@ -418,8 +410,8 @@ impl HeuristicEngine {
             }
         };
 
-        // Parse the condition now so a broken rule is a loading error, not a surprise mid-run.
-        // `parse_expression` rather than hel's `parse_rule`, which panics on bad input.
+        // Parse at load time so a broken rule is a loading error, not a surprise mid-run.
+        // `parse_expression`, not hel's `parse_rule`, which panics on bad input.
         hel::parse_expression(&condition)
             .map_err(|e| Error::RuleParseError(format!("Rule '{}': {}", def.id, e)))?;
 
@@ -455,13 +447,13 @@ impl HeuristicEngine {
         let mut evaluation_traces = Vec::new();
         let mut facts = initial_facts;
 
-        // Forward chaining: keep going while a round fires a rule that had not fired before.
+        // Forward chaining: repeat while a round fires a rule that had not fired yet.
         let mut new_facts_found = true;
         while new_facts_found {
             new_facts_found = false;
 
             for rule in &self.rules {
-                // A rule fires once per run, however many rounds it takes to reach a fixpoint.
+                // Each rule fires once per run.
                 if facts
                     .iter()
                     .any(|fact| matches!(fact, Fact::TriggeredRule(id) if id == &rule.id))
@@ -471,8 +463,8 @@ impl HeuristicEngine {
 
                 let resolver = FactSetResolver::new(&facts);
 
-                // A failing condition is the rule's outcome, not the run's: it is recorded in
-                // the trace and the engine moves on. `execute` has no error channel to put it in.
+                // A failing condition is the rule's outcome, not the run's: recorded in the
+                // trace, and the engine moves on.
                 match evaluate_with_resolver(&rule.condition, &resolver) {
                     Ok(true) => {
                         facts.insert(Fact::TriggeredRule(rule.id.clone()));
@@ -517,8 +509,7 @@ impl HeuristicEngine {
 
         let final_score = scorer.score(&triggered_rules_info);
 
-        // A model that failed to run is reported as a message here rather than dropped: this is
-        // the only field of the report that can carry it.
+        // A model that loaded but failed is reported here as a message.
         #[cfg(feature = "onnx")]
         let onnx_model_evaluation =
             self.model
@@ -559,8 +550,7 @@ impl HeuristicEngine {
             .as_slice()
             .ok_or_else(|| Error::OnnxInferenceFailed("Failed to get output slice".to_string()))?;
 
-        // A classifier's second output is the positive-class score; a single-output model gives
-        // the score directly.
+        // A classifier's second output is the positive-class score; a single output is the score.
         let score = if output_slice.len() >= 2 {
             output_slice[1]
         } else if output_slice.len() == 1 {
@@ -664,8 +654,8 @@ mod tests {
             value: "250".into(),
         });
 
-        // A numeric-looking custom value must resolve as a Number, or the ordering operators
-        // cannot be applied to it — this is the case the resolver now special-cases.
+        // A numeric custom value resolves as a Number, which is what lets the ordering
+        // operators below apply at all.
         let resolver = FactSetResolver::new(&facts);
         assert!(
             evaluate_with_resolver("asm.gadgets > 200", &resolver)?,
@@ -691,8 +681,7 @@ mod tests {
             value: "present".into(),
         });
 
-        // The numeric special-case must not capture non-numeric values: an existing equality rule
-        // comparing against the string form has to keep working.
+        // The numeric case must not capture a non-numeric value.
         let resolver = FactSetResolver::new(&facts);
         assert!(
             evaluate_with_resolver(r#"asm.packer == "present""#, &resolver)?,
@@ -764,13 +753,11 @@ justification = "strcpy is dangerous with network input"
         let conditions_dir = dir.path().join("conditions");
         std::fs::create_dir(&conditions_dir)?;
 
-        // Create external HEL file
         std::fs::write(
             conditions_dir.join("binary-check.hel"),
             r#"binary.format == "ELF""#,
         )?;
 
-        // Create rule file referencing external condition
         std::fs::write(
             dir.path().join("test.rule"),
             r#"[[rule]]
@@ -915,7 +902,7 @@ justification = "Should fail"
             justification: "Test".to_string(),
         };
 
-        // -- Exec: must report the parse failure, not unwind.
+        // -- Exec
         let result = HeuristicEngine::load_rule(&def, Path::new("."));
 
         // -- Check

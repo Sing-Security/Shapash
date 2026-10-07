@@ -48,10 +48,10 @@ pub enum Error {
     MissingCondition(String),
     /// A condition could not be evaluated at all, as opposed to evaluating to false.
     ///
-    /// Note that a failing rule does not stop [`execute`](crate::HeuristicEngine::execute) —
-    /// the failure is recorded per rule in
-    /// [`RuleEvaluationResult::Error`](crate::RuleEvaluationResult::Error) instead, and this
-    /// variant is for a caller that surfaces evaluation failures as errors of its own.
+    /// A failing rule does not stop [`execute`](crate::HeuristicEngine::execute); the failure is
+    /// recorded per rule in
+    /// [`RuleEvaluationResult::Error`](crate::RuleEvaluationResult::Error). This variant is for
+    /// a caller that surfaces evaluation failures as errors of its own.
     #[display("{_0}")]
     ConditionEvaluationFailed(String),
 

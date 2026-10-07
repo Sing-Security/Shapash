@@ -44,12 +44,12 @@ pub enum Fact {
     ImportInfo(ImportInfo),
     /// A query handed to a symbolic-execution backend.
     ///
-    /// Carried so a caller can put it in the set and read it back out; the engine treats it as
-    /// data and does not send it anywhere. **No condition can read it**: the resolver has no
-    /// mapping for this variant, so any `SymQueryRequest.<field>` reference resolves to a null.
+    /// Data only: the engine stores it and sends it nowhere, and **no condition can read it**,
+    /// since the resolver has no mapping for this variant. A `SymQueryRequest.<field>` reference
+    /// resolves to a null.
     SymQueryRequest(SymQueryRequest),
-    /// The result of such a query, on the same footing as [`SymQueryRequest`](Self::SymQueryRequest)
-    /// — carried as data, not readable from a condition.
+    /// The result of such a query, on the same footing as
+    /// [`SymQueryRequest`](Self::SymQueryRequest): data, not readable from a condition.
     SymQueryResult(SymQueryResult),
     /// An open-ended fact, under a caller-chosen object name.
     ///

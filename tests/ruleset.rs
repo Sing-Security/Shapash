@@ -1,9 +1,8 @@
 //! Integration test over the ruleset checked in under `tests/fixtures/`.
 //!
-//! The unit tests build their rule files in a temp directory. This one loads the
-//! fixture as it sits on disk, which is the shape a user copies from — so it also
-//! covers the part the unit tests cannot: a `condition_file` is resolved relative
-//! to the rules directory, not to the process's working directory.
+//! The unit tests build their rule files in a temp directory; this one loads the fixture as it
+//! sits on disk. That is what covers a `condition_file` being resolved relative to the rules
+//! directory rather than to the process's working directory.
 
 use shapash::{BinaryInfo, ConfidenceLevel, Fact, HeuristicEngine, TaintFlow};
 use std::collections::HashSet;
@@ -32,7 +31,7 @@ fn test_fixture_ruleset_loads_and_fires() -> Result<(), Box<dyn std::error::Erro
 
     let report = engine.execute(facts);
 
-    // -- Check: both rules fire, the one whose condition lives in a file included.
+    // -- Check: both rules fire, including the one whose condition lives in a file.
     let ids: Vec<&str> = report
         .triggered_rules
         .iter()

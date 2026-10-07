@@ -77,7 +77,7 @@ impl<'a> HelResolver for FactSetResolver<'a> {
                     _ => {}
                 },
 
-                // The object name is `binary`, not `BinaryInfo`: it is what a condition reads.
+                // Read as `binary`, not `BinaryInfo`.
                 Fact::BinaryInfo(info) if object == "binary" => match field {
                     "format" => return Some(Value::String(info.format.clone())),
                     "arch" => return Some(Value::String(info.arch.clone())),
@@ -101,7 +101,7 @@ impl<'a> HelResolver for FactSetResolver<'a> {
 
                 Fact::ImportInfo(import) if object == "import" => match field {
                     "symbol" => return Some(Value::String(import.symbol.clone())),
-                    // No library means no answer, which HEL reads as a null.
+                    // No library is no answer, which HEL reads as a null.
                     "library" => return import.library.as_ref().map(|l| Value::String(l.clone())),
                     _ => {}
                 },
@@ -112,10 +112,9 @@ impl<'a> HelResolver for FactSetResolver<'a> {
                     value,
                 } if object == namespace.as_ref() => {
                     if field == key.as_ref() {
-                        // A numeric-looking value resolves as a Number so a rule can use the
-                        // ordering operators (`asm.gadgets > 200`). Anything else stays a String,
-                        // so an existing `== "present"` rule is unaffected — "present" is not a
-                        // number. The parse is total; a value that is not a number is not an
+                        // A numeric value resolves as a Number, so a rule can apply an ordering
+                        // operator to it (`asm.gadgets > 200`). Anything else stays a String, so
+                        // `== "present"` still works. A value that is not a number is not an
                         // error.
                         if let Ok(n) = value.parse::<f64>() {
                             return Some(Value::Number(n));
@@ -133,7 +132,7 @@ impl<'a> HelResolver for FactSetResolver<'a> {
                 }
 
                 // A fact kind with no attribute lookup for this object — or a variant the
-                // resolver has no mapping for — is simply not an answer to this question.
+                // resolver has no mapping for — is not an answer to this question.
                 _ => {}
             }
         }
