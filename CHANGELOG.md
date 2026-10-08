@@ -5,6 +5,14 @@ All notable changes to Shapash will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-10-07
+
+### Changed
+
+- Prose typography normalized to ASCII: em/en dashes, curly quotes, ellipses and
+  Unicode arrows in comments and docs are now plain `-`, `"`, `'`, `...` and `-->`.
+  No API or behaviour change; a republish of 0.2.0 with cleaner source.
+
 ## [0.2.0] - 2026-10-07
 
 ### Changed
