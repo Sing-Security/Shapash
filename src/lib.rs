@@ -1,4 +1,4 @@
-//! Shapash — a deterministic, auditable forward-chaining rule engine.
+//! Shapash - a deterministic, auditable forward-chaining rule engine.
 //!
 //! Shapash owns the rules; [HEL](hel) evaluates their conditions. A rule is a TOML record with
 //! an id, a score and a HEL condition; the engine fires the ones whose condition holds and
@@ -57,7 +57,7 @@
 //! # Evaluation
 //!
 //! [`HeuristicEngine::execute`] runs the rules to a fixpoint. Each round evaluates every rule
-//! that has not yet fired, against the fact set as it stands — including the facts earlier
+//! that has not yet fired, against the fact set as it stands - including the facts earlier
 //! rules added, which is what makes the chaining forward. A rule that fires contributes
 //! [`Fact::TriggeredRule`] and is never evaluated again.
 //!
@@ -71,11 +71,11 @@
 //! before the report is returned, and the fact set is only ever queried, so the same rules and
 //! facts give the same report. The one caveat is two facts providing the *same* attribute:
 //! which one a condition sees is then up to `HashSet` iteration order. Supply one fact per
-//! attribute — see [`FactSetResolver`](FactSetResolver#method.resolve_attr).
+//! attribute - see [`FactSetResolver`](FactSetResolver#method.resolve_attr).
 //!
 //! # Cargo features
 //!
-//! - `onnx` (off by default) — pulls in `tract-onnx` and enables loading an ONNX model
+//! - `onnx` (off by default) - pulls in `tract-onnx` and enables loading an ONNX model
 //!   alongside the rules. Without it, the model path passed to
 //!   [`HeuristicEngine::from_paths`] is accepted and ignored, and
 //!   [`HeuristicReport::onnx_model_evaluation`] stays `None`.
@@ -164,7 +164,7 @@ pub struct HeuristicReport {
     pub triggered_rules: Vec<TriggeredRuleInfo>,
     /// What the ONNX model made of the facts, when one ran.
     ///
-    /// `None` when no model was evaluated — the `onnx` feature is off, or no model was
+    /// `None` when no model was evaluated - the `onnx` feature is off, or no model was
     /// supplied. A model that loaded but failed is reported here as a message.
     pub onnx_model_evaluation: Option<Arc<str>>,
     /// Which band [`final_score`](Self::final_score) falls in.
@@ -207,7 +207,7 @@ pub enum RuleEvaluationResult {
     },
     /// The condition did not hold.
     NotTriggered,
-    /// The condition could not be evaluated — a type error, or a call with no registry to
+    /// The condition could not be evaluated - a type error, or a call with no registry to
     /// serve it. Distinct from `NotTriggered`: the rule did not *fail* to fire, it was never
     /// successfully asked.
     Error {
@@ -218,19 +218,19 @@ pub enum RuleEvaluationResult {
 
 /// A band for [`HeuristicReport::final_score`].
 ///
-/// The boundaries live in the engine, not in the enum: 0–30 is [`Low`](ConfidenceLevel::Low),
-/// 31–70 [`Medium`](ConfidenceLevel::Medium), and anything above [`High`](ConfidenceLevel::High).
+/// The boundaries live in the engine, not in the enum: 0-30 is [`Low`](ConfidenceLevel::Low),
+/// 31-70 [`Medium`](ConfidenceLevel::Medium), and anything above [`High`](ConfidenceLevel::High).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ConfidenceLevel {
-    /// A score of 0–30.
+    /// A score of 0-30.
     Low,
-    /// A score of 31–70.
+    /// A score of 31-70.
     Medium,
     /// A score of 71 or more.
     High,
 }
 
-/// The band `score` falls in — 30 and below low, 70 and below medium, above that high.
+/// The band `score` falls in - 30 and below low, 70 and below medium, above that high.
 fn confidence(score: u32) -> ConfidenceLevel {
     match score {
         0..=30 => ConfidenceLevel::Low,
@@ -306,7 +306,7 @@ impl HeuristicEngine {
     /// from a file next to the rules.
     ///
     /// Files are read in the order the directory listing yields them, and rules keep that order
-    /// — the report is sorted afterwards, but two rules with the same id fight over which fires
+    /// - the report is sorted afterwards, but two rules with the same id fight over which fires
     /// first. Files whose extension is not `.rule` are skipped.
     ///
     /// `model_path` is only used when the `onnx` feature is enabled; without it the argument is
@@ -435,7 +435,7 @@ impl HeuristicEngine {
     ///
     /// Runs to a fixpoint: rounds repeat until one adds no new
     /// [`Fact::TriggeredRule`]. Rules are always evaluated in load order and the report is
-    /// sorted, so the result does not depend on iteration order — see the
+    /// sorted, so the result does not depend on iteration order - see the
     /// [determinism note](crate#determinism).
     #[must_use]
     pub fn execute_with_scorer(

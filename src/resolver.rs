@@ -32,7 +32,7 @@ impl<'a> HelResolver for FactSetResolver<'a> {
     /// The value of `object.field`, or `None` if no fact provides it.
     ///
     /// Each fact is tested against the object name its variant is reached by, so a condition
-    /// only sees the fact kinds it names. `None` is a normal answer — HEL evaluates it as a
+    /// only sees the fact kinds it names. `None` is a normal answer - HEL evaluates it as a
     /// null, and a comparison against it is false.
     ///
     /// A fact set holding two facts that provide the *same* attribute has no defined answer:
@@ -131,8 +131,8 @@ impl<'a> HelResolver for FactSetResolver<'a> {
                     return Some(Value::String(id.clone()));
                 }
 
-                // A fact kind with no attribute lookup for this object — or a variant the
-                // resolver has no mapping for — is not an answer to this question.
+                // A fact kind with no attribute lookup for this object - or a variant the
+                // resolver has no mapping for - is not an answer to this question.
                 _ => {}
             }
         }

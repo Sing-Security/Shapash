@@ -1,4 +1,4 @@
-# Shapash — Deterministic Rule Engine
+# Shapash - Deterministic Rule Engine
 
 [![Crates.io](https://img.shields.io/crates/v/shapash.svg)](https://crates.io/crates/shapash)
 [![Documentation](https://docs.rs/shapash/badge.svg)](https://docs.rs/shapash)
@@ -147,7 +147,7 @@ attribute of a `Fact::BinaryInfo`:
 set, but no condition can read them.
 
 An attribute with no fact behind it resolves to a null, and a comparison against it is
-false — not an error. Give one fact per attribute: if two facts provide the same attribute,
+false - not an error. Give one fact per attribute: if two facts provide the same attribute,
 the fact set is a `HashSet` and which one a condition sees depends on its iteration order.
 
 ## Architecture

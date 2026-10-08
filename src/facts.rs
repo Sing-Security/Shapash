@@ -3,11 +3,11 @@
 //! A [`Fact`] is one observation about the subject being scored, and the fact set is the
 //! engine's whole input: rules are HEL expressions over the attributes these facts expose.
 //! [`FactSetResolver`](crate::FactSetResolver) is what maps a rule's `object.field` reference
-//! onto one of them, so the object names in a rule — `binary`, `TaintFlow`, `import` — are
+//! onto one of them, so the object names in a rule - `binary`, `TaintFlow`, `import` - are
 //! chosen here, in the resolver, not in the fact types themselves.
 //!
 //! The set holds facts by value and identity ([`Hash`] + [`Eq`]), so inserting the same fact
-//! twice is a no-op — which is also why a fact carries no ordering: the engine sorts what it
+//! twice is a no-op - which is also why a fact carries no ordering: the engine sorts what it
 //! reports rather than what it stores.
 
 use std::sync::Arc;
@@ -90,7 +90,7 @@ pub struct FunctionCall {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MemoryOperation {
     /// The address the operation acted on. Exposed to conditions as a number, so it is exact
-    /// only up to 2^53 — beyond that a rule's comparison loses precision.
+    /// only up to 2^53 - beyond that a rule's comparison loses precision.
     pub destination_address: u64,
     /// `true` for a write, `false` for a read.
     pub is_write: bool,

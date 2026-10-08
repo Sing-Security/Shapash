@@ -37,7 +37,7 @@ pub enum Error {
     /// Carries the rule id and HEL's own parse diagnostic, which includes the line and column.
     #[display("{_0}")]
     RuleParseError(String),
-    /// A rule's definition is internally inconsistent — both `condition` and `condition_file`
+    /// A rule's definition is internally inconsistent - both `condition` and `condition_file`
     /// set, or neither.
     #[display("{_0}")]
     InvalidRuleDefinition(String),
@@ -60,7 +60,7 @@ pub enum Error {
     #[cfg(feature = "onnx")]
     #[display("{_0}")]
     OnnxModelLoadFailed(String),
-    /// The ONNX model loaded but running it failed — a shape mismatch, or an unusable output.
+    /// The ONNX model loaded but running it failed - a shape mismatch, or an unusable output.
     #[cfg(feature = "onnx")]
     #[display("{_0}")]
     OnnxInferenceFailed(String),

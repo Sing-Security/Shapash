@@ -35,20 +35,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **A bad rule condition is a load error, not a panic.** `from_paths` parsed each condition with
-  a panicking entry point, so a syntactically invalid condition — or a `condition_file` holding
-  `let` bindings, or trailing junk — aborted the process instead of returning the
+  a panicking entry point, so a syntactically invalid condition - or a `condition_file` holding
+  `let` bindings, or trailing junk - aborted the process instead of returning the
   `Error::RuleParseError` its `# Errors` section documented. Conditions are now parsed with the
   fallible path, and the variant is reachable as documented.
 - **LICENSE replaced with the canonical Apache-2.0 text.** The copy shipped through 0.1.15 had
   §9 mis-titled ("Additional Support" for "Additional Liability") and the APPENDIX section removed,
   while `Cargo.toml` declared `license = "Apache-2.0"`. A slightly altered licence is not that
   licence; 0.2.0 ships the verbatim text with the copyright notice filled in. (0.1.15 cannot be
-  corrected after the fact — a published version can be yanked, never edited.)
+  corrected after the fact - a published version can be yanked, never edited.)
 
 ### Known limitations
 - A fact set holding two facts that provide the *same* attribute has no defined answer: the set
   is a `HashSet`, so which one a condition sees depends on iteration order. Give one fact per
-  attribute. (Documented, not changed — choosing the semantics is a design decision.)
+  attribute. (Documented, not changed - choosing the semantics is a design decision.)
 - A `condition_file` must hold a single HEL expression. The `let` bindings a HEL *script* may
   carry are not expressions and are rejected at load time.
 
